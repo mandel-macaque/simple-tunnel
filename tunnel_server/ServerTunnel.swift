@@ -189,6 +189,7 @@ class ServerTunnel: Tunnel, TunnelDelegate, StreamDelegate {
 			case writeStream!:
 				switch eventCode {
 					case [.hasSpaceAvailable]:
+                        simpleTunnelLog("Stream  has space available.")
 						// Send any buffered data.
 						if !savedData.isEmpty {
 							guard savedData.writeToStream(writeStream!) else {
@@ -205,6 +206,7 @@ class ServerTunnel: Tunnel, TunnelDelegate, StreamDelegate {
 						}
 
 					case [.errorOccurred]:
+                        simpleTunnelLog("Error ocurred. Closing tunnel.")
 						closeTunnel()
 						delegate?.tunnelDidClose(self)
 
@@ -213,22 +215,29 @@ class ServerTunnel: Tunnel, TunnelDelegate, StreamDelegate {
 				}
 
 			case readStream!:
+                simpleTunnelLog("Reading stream")
 				var needCloseTunnel = false
 				switch eventCode {
 					case [.hasBytesAvailable]:
+                        simpleTunnelLog("\tHas bytes availabe.")
 						needCloseTunnel = !handleBytesAvailable()
 
 					case [.openCompleted]:
+                        simpleTunnelLog("\tOpen completed.")
 						delegate?.tunnelDidOpen(self)
 
-					case [.errorOccurred], [.endEncountered]:
+					case [.errorOccurred]:
+                        simpleTunnelLog("Error ocurred")
 						needCloseTunnel = true
-
+                case [.endEncountered]:
+                        simpleTunnelLog("End ocurred")
+                        needCloseTunnel = true
 					default:
 						break
 				}
 
 				if needCloseTunnel {
+                    simpleTunnelLog("Closing tunnel")
 					closeTunnel()
 					delegate?.tunnelDidClose(self)
 				}
@@ -281,6 +290,7 @@ class ServerTunnel: Tunnel, TunnelDelegate, StreamDelegate {
         simpleTunnelLog("handleMessage")
 		switch commandType {
 			case .open:
+                simpleTunnelLog("Open command received.")
                 handleConnectionOpen(properties: properties)
 
 			case .fetchConfiguration:
